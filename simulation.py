@@ -15,7 +15,7 @@ plt.style.use("ggplot")
 
 
 def animation_function(frame, simulator):
-    simulator.system_dynamics(0)
+    simulator.update(0)
     state = simulator.state
 
     width = .6

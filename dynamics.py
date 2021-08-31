@@ -36,4 +36,7 @@ class CartSystem:
         # Include damping
         state_derivs[3:] -= np.array([c_c, c_p, c_p]).T * self.state[3:]
 
-        self.state += self.dt*state_derivs
+        return state_derivs
+
+    def update(self, u):
+        self.state += self.dt * self.system_dynamics(u)
