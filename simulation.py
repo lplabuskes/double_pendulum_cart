@@ -3,8 +3,10 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 import dynamics
 
-x0 = np.array([0, .01, -.01, 0, 0, 0])
-cart = dynamics.CartSystem(x0)
+x0mean = np.array([0, 0, 0, 0, 0, 0])
+x0cov = .01*np.identity(6)
+
+cart = dynamics.CartSystem(x0mean, x0cov)
 
 fig, axes = plt.subplots(1, 1)
 axes.set_ylim(-2, 4)
@@ -15,7 +17,7 @@ plt.style.use("ggplot")
 
 
 def animation_function(frame, simulator):
-    simulator.update(0)
+    simulator.update()
     state = simulator.state
 
     width = .6
