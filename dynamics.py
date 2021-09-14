@@ -3,6 +3,7 @@ import numpy as np
 
 class CartSystem:
     dt = .01
+    time = 0
     process_noise = .1*np.identity(6)
     measurement_noise = .03*np.identity(3)
 
@@ -40,8 +41,10 @@ class CartSystem:
         # Include damping
         state_derivs[3:] -= np.array([c_c, c_p, c_p]) * state[3:]
         state_derivs += np.random.multivariate_normal(np.zeros(6), self.process_noise)
-
-        return state_derivs
+        next_state = state + self.dt*state_derivs
+        next_state[1] = np.mod(next_state[1], (2*np.pi))
+        next_state[2] = np.mod(next_state[2], (2*np.pi))
+        return next_state
 
     # An unscented Kalman filter implementation
     def estimator_update(self, u_prev):
@@ -52,9 +55,9 @@ class CartSystem:
         x_sigma_points = []
         for i in range(6):
             temp_state = self.est_state + sigma_spacing[:, i]
-            x_sigma_points.append(temp_state + self.dt * self.system_dynamics(temp_state, u_prev))
+            x_sigma_points.append(self.system_dynamics(temp_state, u_prev))
             temp_state = self.est_state - sigma_spacing[:, i]
-            x_sigma_points.append(temp_state + self.dt * self.system_dynamics(temp_state, u_prev))
+            x_sigma_points.append(self.system_dynamics(temp_state, u_prev))
 
         # Generate statistics of state prediction sigma points
         predicted_state = sum(x_sigma_points)/len(x_sigma_points)
@@ -75,8 +78,9 @@ class CartSystem:
         self.est_cov = predicted_covariance - kalman_gain @ measurement_covariance @ kalman_gain.T
 
     def update(self):
+        self.time += self.dt
         # compute control
         # update dynamics
         # estimate state
-        self.state += self.dt * self.system_dynamics(self.state, 0)
+        self.state = self.system_dynamics(self.state, 0)
         self.estimator_update(0)
