@@ -12,7 +12,7 @@ class CartSystem:
         self.est_cov = x0cov
         self.state = np.random.multivariate_normal(x0mean, x0cov)
 
-    def system_dynamics(self, state, u):
+    def system_dynamics(self, state, u, mod=False):
         # Constants
         m_c = 3  # cart mass
         m_p = 1  # pendulum mass
@@ -42,8 +42,11 @@ class CartSystem:
         state_derivs[3:] -= np.array([c_c, c_p, c_p]) * state[3:]
         state_derivs += np.random.multivariate_normal(np.zeros(6), self.process_noise)
         next_state = state + self.dt*state_derivs
-        next_state[1] = np.mod(next_state[1], (2*np.pi))
-        next_state[2] = np.mod(next_state[2], (2*np.pi))
+
+        if mod:
+            next_state[1] = np.mod(next_state[1], (2*np.pi))
+            next_state[2] = np.mod(next_state[2], (2*np.pi))
+
         return next_state
 
     # An unscented Kalman filter implementation
@@ -58,6 +61,8 @@ class CartSystem:
             x_sigma_points.append(self.system_dynamics(temp_state, u_prev))
             temp_state = self.est_state - sigma_spacing[:, i]
             x_sigma_points.append(self.system_dynamics(temp_state, u_prev))
+        for i in range(6):
+            x_sigma_points.append(self.system_dynamics(self.est_state, u_prev))
 
         # Generate statistics of state prediction sigma points
         predicted_state = sum(x_sigma_points)/len(x_sigma_points)
